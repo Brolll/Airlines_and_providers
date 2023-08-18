@@ -1,0 +1,43 @@
+Вывод схем и их провайдеров
+SELECT
+     "SSchema"."id",
+     "SSchema"."name",
+     ARRAY_AGG("ProviderSchema"."provider_id") AS "providers"
+FROM
+     "SSchema"
+     LEFT JOIN "ProviderSchema" ON "SSchema"."id" = "ProviderSchema"."schema_id"
+GROUP BY
+     "SSchema"."id",
+     "SSchema"."name"
+
+
+Вывод провайдеров и их авиакомпаний
+SELECT
+     "Provider"."id",
+     "Provider"."name",
+     ARRAY_AGG("ProviderAirline"."airline_id") AS "airlines"
+FROM
+     "Provider"
+     left JOIN "ProviderAirline" ON "Provider"."code" = "ProviderAirline"."provider_code"
+GROUP BY
+     "Provider"."id",
+     "Provider"."name"
+
+
+Вывод авиакомпаний в зависимости от аккаунта
+
+SELECT
+						"Airline"."name"
+							FROM "Account"
+								LEFT JOIN "ProviderSchema"
+							    ON "Account"."SchemaId" = "ProviderSchema"."schema_id"
+							    LEFT JOIN "Provider"
+								ON "ProviderSchema"."provider_id" = "Provider"."id"
+								LEFT JOIN "ProviderAirline"
+								ON "Provider"."code" = "ProviderAirline"."provider_code"
+								LEFT JOIN "Airline"
+								ON "Airline"."id" = "ProviderAirline"."airline_id"
+							WHERE
+								"Account"."id" = $1
+							GROUP BY
+								"Airline"."name"
