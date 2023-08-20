@@ -910,7 +910,6 @@ func handlerAviaListAcc(w http.ResponseWriter, r *http.Request) {
 			<html>
 			<body>
 				<h1>13 - Поиск авиакомпаний по аккаунту<h1>
-				<h2><p>Введите Id аккаунта у которого хотите поменять схему и Id схемы на которую поменять<p><h2>
 				<form action="/13" method="post">
 					<label for="nameInput">Введите Id аккаунта:</label>
 					<input type="text" id="nameInput" name="id">
