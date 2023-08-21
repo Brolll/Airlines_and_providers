@@ -57,7 +57,11 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, http.StatusBadRequest)
 		return
 	}
-	err = tp.Execute(w, nil)
+	err = tp.ExecuteTemplate(w, "mainPage.html", r)
+	if err != nil {
+		fmt.Fprintln(w, http.StatusBadRequest)
+		return
+	}
 }
 
 func handlerAddAirline(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
