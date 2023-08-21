@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<body>
+{{if eq .Method "GET"}}
+<h1>8 - Изменение схемы</h1>
+  <form action="/8" method="post">
+    <label for="idInput">Введите Id:</label>
+    <input type="text" id="idInput" name="id">
+    <label for="nameInput">Введите новое имя для схемы:</label>
+    <input type="text" id="nameInput" name="name">
+    <button type="submit">Отправить</button>
+  </form>
+  <a href="http://localhost:8080">Вернутся на главную</a>
+<h1>Схемы:</h1>
+{{else if eq .Method "POST"}}
+<h1>Успешно</h1>
+<a href="http://localhost:8080">Вернутся на главную</a>
+{{end}}
+</body>
+</html>

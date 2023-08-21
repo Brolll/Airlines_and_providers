@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<body>
+{{if eq .Method "GET"}}
+  <h1>2 - Удаление авиакомпании</h1>
+    <form action="/2" method="post">
+      <label for="idInput">Введите Id:</label>
+      <input type="text" id="idInput" name="id">
+      <button type="submit">Отправить</button>
+    </form>
+  <a href="http://localhost:8080">Вернутся на главную</a>
+  <h3>Авиакомпании:</h3>
+{{else if eq .Method "POST"}}
+  <h2>Успешно</h2>
+  <a href="http://localhost:8080">Вернутся на главную</a>
+{{end}}
+</body>
+</html>

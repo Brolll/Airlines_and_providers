@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<body>
+{{if eq .Method "GET"}}
+<h1>3 - Добавление поставщика</h1>
+    <form action="/3" method="post">
+        <label for="idInput">Введите Id:</label>
+        <input type="text" id="idInput" name="id">
+        <label for="nameInput">Введите Name:</label>
+        <input type="text" id="nameInput" name="name">
+        <button type="submit">Отправить</button>
+    </form>
+    <a href="http://localhost:8080">Вернутся на главную</a>
+{{else if eq .Method "POST"}}
+<h1>Успешно</h1>
+<a href="http://localhost:8080">Вернутся на главную</a>
+{{end}}
+</body>
+</html>

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<body>
+{{if eq .Method "GET"}}
+<h1>11 - Изменение схемы у аккаунта</h1>
+    <h2>Введите Id аккаунта у которого хотите поменять схему и Id схемы на которую поменять</h2>
+        <form action="/11" method="post">
+            <label for="accIdInput">Введите Id аккаунта:</label>
+            <input type="text" id="accIdInput" name="idacc">
+            <label for="schIdInput">Введите Id схемы:</label>
+            <input type="text" id="schIdInput" name="idsch">
+            <button type="submit">Отправить</button>
+        </form>
+        <a href="http://localhost:8080">Вернутся на главную</a>
+<h1>Схемы:</h1>
+{{else if eq .Method "POST"}}
+<h1>Успешно</h1>
+<a href="http://localhost:8080">Вернутся на главную</a>
+{{end}}
+</body>
+</html>

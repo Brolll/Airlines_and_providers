@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<body>
+{{if eq .Method "GET"}}
+<h1>10 - Добавление аккаунта</h1>
+    <form action="/10" method="post">
+        <label for="sidInput">Введите SchemaId:</label>
+        <input type="text" id="sidInput" name="schemaId">
+        <label for="idInput">Введите Name:</label>
+        <input type="text" id="idInput" name="name">
+        <button type="submit">Отправить</button>
+    </form>
+    <a href="http://localhost:8080">Вернутся на главную</a>
+<h1>Схемы:</h1>
+{{else if eq .Method "POST"}}
+<h1>Успешно</h1>
+<a href="http://localhost:8080">Вернутся на главную</a>
+{{end}}
+</body>
+</html>

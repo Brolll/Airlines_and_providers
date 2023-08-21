@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<body>
+{{if eq .Method "GET"}}
+<h1>13 - Поиск авиакомпаний по аккаунту</h1>
+  <form action="/13" method="post">
+    <label for="nameInput">Введите Id аккаунта:</label>
+    <input type="text" id="nameInput" name="id">
+    <button type="submit">Отправить</button>
+  </form>
+  <a href="http://localhost:8080">Вернутся на главную</a>
+<h1>Аккаунты:</h1>
+{{else if eq .Method "POST"}}
+<h1>Список авиакомпаний у аккаунта:</h1>
+<a href="http://localhost:8080">Вернутся на главную</a>
+{{end}}
+</body>
+</html>

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<body>
+{{if eq .Method "GET"}}
+		<h1>1 - Добавление авиакомпании</h1>
+    		<form action="/1" method="post">
+				<label for="idInput">Введите Id:</label>
+				<input type="text" id="idInput" name="id">
+				<label for="nameInput">Введите Name:</label>
+				<input type="text" id="nameInput" name="name">
+				<label for="provider_codeInput">Введите Provider_code:</label>
+				<input type="text" id="provider_codeInput" name="provider_code">
+    			<button type="submit" name="submit">Отправить</button>
+    		</form>
+    		<a href="http://localhost:8080">Вернутся на главную</a>
+<h3>Авиакомпании:</h3>
+{{else if eq .Method "POST"}}
+	<h1>Успешно</h1>
+	<a href="http://localhost:8080">Вернутся на главную</a>
+{{end}}
+</body>
+</html>
