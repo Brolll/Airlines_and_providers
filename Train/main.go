@@ -7,6 +7,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	_ "github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	"html/template"
 	"net/http"
 	"strconv"
 )
@@ -51,60 +52,36 @@ type Airpv struct {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, `
-			<!DOCTYPE html>
-			<html>
-			<body>
-				<a href="http://localhost:8080/1">1.   Добавить авиакомпанию</a><p><p>
-				<a href="http://localhost:8080/2">2.   Удалить авиакомпанию по id</a><p><p>
-				<a href="http://localhost:8080/3">3.   Добавить поставщика</a><p><p>
-				<a href="http://localhost:8080/4">4.   Удалить поставщика по Id</a><p><p>
-				<a href="http://localhost:8080/5">5.   Изменить список поставщиков</a><p><p>
-				<a href="http://localhost:8080/6">6.   Добавить схему</a><p><p>
-				<a href="http://localhost:8080/7">7.   Искать схему по названию</a><p><p>
-				<a href="http://localhost:8080/8">8.   Изменить схему</a><p><p>
-				<a href="http://localhost:8080/9">9.   Удалить схему</a><p><p>
-				<a href="http://localhost:8080/10">10. Добавить аккаунт</a><p><p>
-				<a href="http://localhost:8080/11">11. Изменение схемы аккаунта</a><p><p>
-				<a href="http://localhost:8080/12">12. Удалить аккаунт</a><p><p>
-				<a href="http://localhost:8080/13">13. Получить список авиакомпаний по Id аккаунта</a><p><p>
-				<a href="http://localhost:8080/14">14. Получить список авиакомпаний по Id поставщика</a><p><p>
-			</body>
-			</html>
-		`)
+	tp, err := template.ParseFiles("./ui/html/mainPage.html")
+	if err != nil {
+		fmt.Fprintln(w, http.StatusBadRequest)
+		return
+	}
+	err = tp.Execute(w, nil)
 }
 
 func handlerAddAirline(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
+	tp, err := template.ParseFiles("./ui/html/addAirline.html")
+	if err != nil {
+		fmt.Fprintln(w, http.StatusBadRequest)
+		return
+	}
+	err = tp.ExecuteTemplate(w, "addAirline.html", r)
+	if err != nil {
+		fmt.Fprintln(w, http.StatusBadRequest)
+		return
+	}
 	if r.Method == "GET" {
-		fmt.Fprintf(w, `
-			<!DOCTYPE html>
-			<html>
-			<body>
-				<h1>1 - Добавление авиакомпании<h1>
-				<form action="/1" method="post">
-					<label for="idInput">Введите Id:</label>
-					<input type="text" id="idInput" name="id">
-					<label for="nameInput">Введите Name:</label>
-					<input type="text" id="nameInput" name="name">
-					<label for="nameInput">Введите Provider_code:</label>
-					<input type="text" id="provider_codeInput" name="provider_code">
-					<button type="submit">Отправить</button>
-				</form>
-				<a href="http://localhost:8080">Вернутся на главную</a>
-			</body>
-			</html>
-		`)
 		airlines := []Airline{}
 		err := db.Select(&airlines, `SELECT * FROM "Airline"`)
 		if err != nil {
 			fmt.Fprintln(w, http.StatusBadRequest)
 			return
 		}
-		fmt.Fprintln(w, "<p>Авиакомпании:<p>")
 		for _, airline := range airlines {
 			fmt.Fprintf(w, "<p>id: %s, name: %s\n<p>", airline.Id, airline.Name)
 		}
-		fmt.Fprintln(w, "Список поставщиков и компаний которыми они владеют:")
+		fmt.Fprintln(w, "<b>Список поставщиков и компаний которыми они владеют:</b>")
 		airpvs := []Airpv{}
 		err = db.Select(&airpvs, `
 		SELECT
@@ -137,10 +114,6 @@ func handlerAddAirline(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
 			fmt.Fprintln(w, http.StatusBadRequest)
 			return
 		}
-		if err != nil {
-			fmt.Fprintln(w, http.StatusBadRequest)
-			return
-		}
 		_, err = db.Exec(`INSERT INTO "Airline" ("id", "name") VALUES ($1,$2)`, id, name)
 		if err != nil {
 			fmt.Fprintln(w, http.StatusBadRequest)
@@ -151,41 +124,28 @@ func handlerAddAirline(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
 			fmt.Fprintln(w, http.StatusBadRequest)
 			return
 		}
-		fmt.Fprintf(w, `<!DOCTYPE html>
-			<html>
-			<body>
-				<h1>Успешно</h1>
-				<a href="http://localhost:8080">Вернутся на главную</a>
-			</body>
-			</html>
-			`)
 		return
 	}
 }
 
 func handlerDeleteAirline(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
+	tp, err := template.ParseFiles("./ui/html/deleteAirline.html")
+	if err != nil {
+		fmt.Fprintln(w, http.StatusBadRequest)
+		return
+	}
+	err = tp.ExecuteTemplate(w, "deleteAirline.html", r)
+	if err != nil {
+		fmt.Fprintln(w, http.StatusBadRequest)
+		return
+	}
 	if r.Method == "GET" {
-		fmt.Fprintf(w, `
-			<!DOCTYPE html>
-			<html>
-			<body>
-				<h1>2 - Удаление авиакомпании<h1>
-				<form action="/2" method="post">
-					<label for="idInput">Введите Id:</label>
-					<input type="text" id="idInput" name="id">
-					<button type="submit">Отправить</button>
-				</form>
-				<a href="http://localhost:8080">Вернутся на главную</a>
-			</body>
-			</html>
-		`)
 		airlines := []Airline{}
 		err := db.Select(&airlines, `SELECT * FROM "Airline"`)
 		if err != nil {
 			fmt.Fprintln(w, http.StatusBadRequest)
 			return
 		}
-		fmt.Fprintln(w, "<p>Авиакомпании:<p>")
 		for _, airline := range airlines {
 			fmt.Fprintf(w, "<p>id: %s, name: %s\n<p>", airline.Id, airline.Name)
 		}
@@ -205,37 +165,22 @@ func handlerDeleteAirline(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
 			fmt.Fprintln(w, http.StatusBadRequest)
 			return
 		}
-		fmt.Fprintf(w, `<!DOCTYPE html>
-			<html>
-			<body>
-				<h1>Успешно</h1>
-				<a href="http://localhost:8080">Вернутся на главную</a>
-			</body>
-			</html>
-			`)
 		return
 	}
 }
 
 func handlerAddProvider(w http.ResponseWriter, r *http.Request, db *sqlx.DB) { //Возможно надо доработать
-	if r.Method == "GET" {
-		fmt.Fprintf(w, `
-			<!DOCTYPE html>
-			<html>
-			<body>
-				<h1>1 - Добавление поставщика<h1>
-				<form action="/3" method="post">
-					<label for="idInput">Введите Id:</label>
-					<input type="text" id="idInput" name="id">
-					<label for="nameInput">Введите Name:</label>
-					<input type="text" id="nameInput" name="name">
-					<button type="submit">Отправить</button>
-				</form>
-				<a href="http://localhost:8080">Вернутся на главную</a>
-			</body>
-			</html>
-		`)
-	} else if r.Method == "POST" {
+	tp, err := template.ParseFiles("./ui/html/addProvider.html")
+	if err != nil {
+		fmt.Fprintln(w, http.StatusBadRequest)
+		return
+	}
+	err = tp.ExecuteTemplate(w, "addProvider.html", r)
+	if err != nil {
+		fmt.Fprintln(w, http.StatusBadRequest)
+		return
+	}
+	if r.Method == "POST" {
 		id, name := r.FormValue("id"), r.FormValue("name")
 		if id == "" || name == "" {
 			fmt.Fprintln(w, http.StatusBadRequest)
@@ -246,35 +191,22 @@ func handlerAddProvider(w http.ResponseWriter, r *http.Request, db *sqlx.DB) { /
 			fmt.Fprintln(w, http.StatusBadRequest)
 			return
 		}
-		fmt.Fprintf(w, `<!DOCTYPE html>
-			<html>
-			<body>
-				<h1>Успешно</h1>
-				<a href="http://localhost:8080">Вернутся на главную</a>
-			</body>
-			</html>
-			`)
 		return
 	}
 }
 
 func handlerDeleteProvider(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
+	tp, err := template.ParseFiles("./ui/html/deleteProvider.html")
+	if err != nil {
+		fmt.Fprintln(w, http.StatusBadRequest)
+		return
+	}
+	err = tp.ExecuteTemplate(w, "deleteProvider.html", r)
+	if err != nil {
+		fmt.Fprintln(w, http.StatusBadRequest)
+		return
+	}
 	if r.Method == "GET" {
-		fmt.Fprintf(w, `
-			<!DOCTYPE html>
-			<html>
-			<body>
-				<h1>4 - Удаление поставщика по Id<h1>
-				<form action="/4" method="post">
-					<label for="idInput">Введите Id:</label>
-					<input type="text" id="idInput" name="id">
-					<button type="submit">Отправить</button>
-				</form>
-				<a href="http://localhost:8080">Вернутся на главную</a>
-				<h2><p>Список поставщиков и компаний которыми они владеют:<p><h2>
-			</body>
-			</html>
-		`)
 		airpvs := []Airpv{}
 		err := db.Select(&airpvs, `
 		SELECT
@@ -325,37 +257,22 @@ func handlerDeleteProvider(w http.ResponseWriter, r *http.Request, db *sqlx.DB) 
 			fmt.Fprintln(w, http.StatusBadRequest)
 			return
 		}
-		fmt.Fprintf(w, `<!DOCTYPE html>
-			<html>
-			<body>
-				<h1>Успешно</h1>
-				<a href="http://localhost:8080">Вернутся на главную</a>
-			</body>
-			</html>
-			`)
 		return
 	}
 }
 
 func handlerModifyProvider(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
+	tp, err := template.ParseFiles("./ui/html/modifyProvider.html")
+	if err != nil {
+		fmt.Fprintln(w, http.StatusBadRequest)
+		return
+	}
+	err = tp.ExecuteTemplate(w, "modifyProvider.html", r)
+	if err != nil {
+		fmt.Fprintln(w, http.StatusBadRequest)
+		return
+	}
 	if r.Method == "GET" {
-		fmt.Fprintf(w, `
-			<!DOCTYPE html>
-			<html>
-			<body>
-				<h1>5 - Изменения списка поставщиков <p>Введите код поставщика и Id авикомпании которую хотите убрать<p><h1>
-				<form action="/5" method="post">
-					<label for="idInput">Введите Id:</label>
-					<input type="text" id="idInput" name="id">
-					<label for="nameInput">Введите Provider_code:</label>
-					<input type="text" id="provider_codeInput" name="provider_code">
-					<button type="submit">Отправить</button>
-				</form>
-				<a href="http://localhost:8080">Вернутся на главную</a>
-			</body>
-			</html>
-		`)
-		fmt.Fprintln(w, "<p>Список поставщиков и компаний которыми они владеют:<p>")
 		airpvs := []Airpv{}
 		err := db.Select(&airpvs, `
 		SELECT
@@ -388,50 +305,33 @@ func handlerModifyProvider(w http.ResponseWriter, r *http.Request, db *sqlx.DB) 
 			fmt.Fprintln(w, http.StatusBadRequest)
 			return
 		}
-		if err != nil {
-			fmt.Fprintln(w, http.StatusBadRequest)
-			return
-		}
 		_, err = db.Exec(`DELETE FROM "ProviderAirline" WHERE provider_code = $1 AND airline_id = $2`, provider_code, id)
 		if err != nil {
 			fmt.Fprintln(w, http.StatusBadRequest)
 			return
 		}
-		fmt.Fprintf(w, `<!DOCTYPE html>
-			<html>
-			<body>
-				<h1>Успешно</h1>
-				<a href="http://localhost:8080">Вернутся на главную</a>
-			</body>
-			</html>
-			`)
 		return
 	}
 }
 
-func handlerAddSchema(w http.ResponseWriter, r *http.Request, db *sqlx.DB) { //Возможно надо доработать
+func handlerAddSchema(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
+	tp, err := template.ParseFiles("./ui/html/addSchema.html")
+	if err != nil {
+		fmt.Fprintln(w, http.StatusBadRequest)
+		return
+	}
+	err = tp.ExecuteTemplate(w, "addSchema.html", r)
+	if err != nil {
+		fmt.Fprintln(w, http.StatusBadRequest)
+		return
+	}
 	if r.Method == "GET" {
-		fmt.Fprintf(w, `
-			<!DOCTYPE html>
-			<html>
-			<body>
-				<h1>6 - Добавление схемы<h1>
-				<form action="/6" method="post">
-					<label for="nameInput">Введите Name:</label>
-					<input type="text" id="nameInput" name="name">
-					<button type="submit">Отправить</button>
-				</form>
-				<a href="http://localhost:8080">Вернутся на главную</a>
-			</body>
-			</html>
-		`)
 		schemas := []SSchema{}
 		err := db.Select(&schemas, `SELECT * FROM "SSchema"`)
 		if err != nil {
 			fmt.Fprintln(w, http.StatusBadRequest)
 			return
 		}
-		fmt.Fprintln(w, "<p>Схемы:<p>")
 		for _, schema := range schemas {
 			fmt.Fprintf(w, "<p>id: %d, name: %s\n<p>", schema.Id, schema.Name)
 		}
@@ -446,36 +346,22 @@ func handlerAddSchema(w http.ResponseWriter, r *http.Request, db *sqlx.DB) { //�
 			fmt.Fprintln(w, http.StatusBadRequest)
 			return
 		}
-
-		fmt.Fprintf(w, `<!DOCTYPE html>
-			<html>
-			<body>
-				<h1>Успешно</h1>
-				<a href="http://localhost:8080">Вернутся на главную</a>
-			</body>
-			</html>
-			`)
 		return
 	}
 }
 
 func handlerSchemaSearch(w http.ResponseWriter, r *http.Request, db *sqlx.DB) { //Вывод схемы не массивом, а строкой
-	if r.Method == "GET" {
-		fmt.Fprintf(w, `
-			<!DOCTYPE html>
-			<html>
-			<body>
-				<h1>7 - Поиск схемы по названию?<h1>
-				<form action="/7" method="post">
-					<label for="nameInput">Введите Name:</label>
-					<input type="text" id="nameInput" name="name">
-					<button type="submit">Отправить</button>
-				</form>
-				<a href="http://localhost:8080">Вернутся на главную</a>
-			</body>
-			</html>
-		`)
-	} else if r.Method == "POST" {
+	tp, err := template.ParseFiles("./ui/html/schemaSearch.html")
+	if err != nil {
+		fmt.Fprintln(w, http.StatusBadRequest)
+		return
+	}
+	err = tp.ExecuteTemplate(w, "schemaSearch.html", r)
+	if err != nil {
+		fmt.Fprintln(w, http.StatusBadRequest)
+		return
+	}
+	if r.Method == "POST" {
 		name := r.FormValue("name")
 		if name == "" {
 			fmt.Fprintln(w, http.StatusBadRequest)
@@ -487,44 +373,31 @@ func handlerSchemaSearch(w http.ResponseWriter, r *http.Request, db *sqlx.DB) { 
 			fmt.Fprintln(w, http.StatusBadRequest)
 			return
 		}
-		fmt.Fprintf(w, `<!DOCTYPE html>
-			<html>
-			<body>
-				<h1>Вот ваша схема %v</h1>
-				<a href="http://localhost:8080">Вернутся на главную</a>
-			</body>
-			</html>
-			`, sch)
+		fmt.Fprintf(w, `<p>%v</p>`, sch)
 		return
 	}
 }
 
 func handlerModifySchema(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
+	tp, err := template.ParseFiles("./ui/html/modifySchema.html")
+	if err != nil {
+		fmt.Fprintln(w, http.StatusBadRequest)
+		return
+	}
+	err = tp.ExecuteTemplate(w, "modifySchema.html", r)
+	if err != nil {
+		fmt.Fprintln(w, http.StatusBadRequest)
+		return
+	}
 	if r.Method == "GET" {
-		fmt.Fprintf(w, `
-			<!DOCTYPE html>
-			<html>
-			<body>
-				<h1>8 - Изменение схемы<h1>
-				<form action="/8" method="post">
-					<label for="nameInput">Введите Id:</label>
-					<input type="text" id="nameInput" name="id">
-					<label for="nameInput">Введите новое имя для схемы:</label>
-					<input type="text" id="nameInput" name="name">
-					<button type="submit">Отправить</button>
-				</form>
-				<a href="http://localhost:8080">Вернутся на главную</a>
-			</body>
-			</html>
-		`)
 		var sch []SSchema
 		err := db.Select(&sch, `SELECT * FROM "SSchema"`)
-		for _, schema := range sch {
-			fmt.Fprintf(w, "<p>id: %d name: %s <p>", schema.Id, schema.Name)
-		}
 		if err != nil {
 			fmt.Fprintln(w, http.StatusBadRequest)
 			return
+		}
+		for _, schema := range sch {
+			fmt.Fprintf(w, "<p>id: %d name: %s <p>", schema.Id, schema.Name)
 		}
 	} else if r.Method == "POST" {
 		name := r.FormValue("name")
@@ -538,41 +411,28 @@ func handlerModifySchema(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
 			fmt.Fprintln(w, http.StatusBadRequest)
 			return
 		}
-		fmt.Fprintf(w, `<!DOCTYPE html>
-			<html>
-			<body>
-				<h1>Успешно</h1>
-				<a href="http://localhost:8080">Вернутся на главную</a>
-			</body>
-			</html>
-			`)
 		return
 	}
 }
 
 func handlerDeleteSchema(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
+	tp, err := template.ParseFiles("./ui/html/deleteSchema.html")
+	if err != nil {
+		fmt.Fprintln(w, http.StatusBadRequest)
+		return
+	}
+	err = tp.ExecuteTemplate(w, "deleteSchema.html", r)
+	if err != nil {
+		fmt.Fprintln(w, http.StatusBadRequest)
+		return
+	}
 	if r.Method == "GET" {
-		fmt.Fprintf(w, `
-			<!DOCTYPE html>
-			<html>
-			<body>
-				<h1>9 - Удаление схемы<h1>
-				<form action="/9" method="post">
-					<label for="nameInput">Введите Id:</label>
-					<input type="text" id="idInput" name="id">
-					<button type="submit">Отправить</button>
-				</form>
-				<a href="http://localhost:8080">Вернутся на главную</a>
-			</body>
-			</html>
-		`)
 		schemas := []SSchema{}
 		err := db.Select(&schemas, `SELECT * FROM "SSchema"`)
 		if err != nil {
 			fmt.Fprintln(w, http.StatusBadRequest)
 			return
 		}
-		fmt.Fprintln(w, "<p>Схемы:<p>")
 		for _, schema := range schemas {
 			fmt.Fprintf(w, "<p>id: %d, name: %s\n<p>", schema.Id, schema.Name)
 		}
@@ -594,47 +454,32 @@ func handlerDeleteSchema(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
 			fmt.Fprintln(w, http.StatusBadRequest)
 			return
 		}
-		fmt.Fprintf(w, `<!DOCTYPE html>
-			<html>
-			<body>
-				<h1>Успешно</h1>
-				<a href="http://localhost:8080">Вернутся на главную</a>
-			</body>
-			</html>
-			`)
 		return
 	}
 }
 
 func handlerAccountAdd(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
+	tp, err := template.ParseFiles("./ui/html/accountAdd.html")
+	if err != nil {
+		fmt.Fprintln(w, http.StatusBadRequest)
+		return
+	}
+	err = tp.ExecuteTemplate(w, "accountAdd.html", r)
+	if err != nil {
+		fmt.Fprintln(w, http.StatusBadRequest)
+		return
+	}
 	if r.Method == "GET" {
-		fmt.Fprintf(w, `
-			<!DOCTYPE html>
-			<html>
-			<body>
-				<h1>10 - Добавление аккаунта<h1>
-				<form action="/10" method="post">
-					<label for="nameInput">Введите SchemaId:</label>
-					<input type="text" id="idInput" name="schemaId">
-					<label for="nameInput">Введите Name:</label>
-					<input type="text" id="idInput" name="name">
-					<button type="submit">Отправить</button>
-				</form>
-				<a href="http://localhost:8080">Вернутся на главную</a>
-			</body>
-			</html>
-		`)
 		schemas := []SSchema{}
 		err := db.Select(&schemas, "SELECT * FROM \"SSchema\"")
 		if err != nil {
 			fmt.Fprintln(w, http.StatusBadRequest)
 			return
 		}
-		fmt.Fprintln(w, "<p>Схемы:<p>")
 		for _, schema := range schemas {
 			fmt.Fprintf(w, "<p>id: %d, name: %s\n<p>", schema.Id, schema.Name)
 		}
-		fmt.Fprintln(w, "<p>Аккаунты:<p>")
+		fmt.Fprintln(w, "<h1>Аккаунты:</h1>")
 		accounts := []Account{}
 		err = db.Select(&accounts, `SELECT * FROM "Account"`)
 		if err != nil {
@@ -660,41 +505,24 @@ func handlerAccountAdd(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
 			fmt.Fprintln(w, http.StatusBadRequest)
 			return
 		}
-
-		fmt.Fprintf(w, `<!DOCTYPE html>
-			<html>
-			<body>
-				<h1>Успешно</h1>
-				<a href="http://localhost:8080">Вернутся на главную</a>
-			</body>
-			</html>
-			`)
 		return
 	}
 }
 
 func handlerModifyAccsSchema(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
+	tp, err := template.ParseFiles("./ui/html/modifyAccsSchema.html")
+	if err != nil {
+		fmt.Fprintln(w, http.StatusBadRequest)
+		return
+	}
+	err = tp.ExecuteTemplate(w, "modifyAccsSchema.html", r)
+	if err != nil {
+		fmt.Fprintln(w, http.StatusBadRequest)
+		return
+	}
 	if r.Method == "GET" {
-		fmt.Fprintf(w, `
-			<!DOCTYPE html>
-			<html>
-			<body>
-				<h1>11 - Изменение схемы у аккаунта<h1>
-				<h2><p>Введите Id аккаунта у которого хотите поменять схему и Id схемы на которую поменять<p><h2>
-				<form action="/11" method="post">
-					<label for="nameInput">Введите Id аккаунта:</label>
-					<input type="text" id="nameInput" name="idacc">
-					<label for="nameInput">Введите Id схемы:</label>
-					<input type="text" id="nameInput" name="idsch">
-					<button type="submit">Отправить</button>
-				</form>
-				<a href="http://localhost:8080">Вернутся на главную</a>
-			</body>
-			</html>
-		`)
 		var sch []SSchema
 		err := db.Select(&sch, `SELECT * FROM "SSchema"`)
-		fmt.Fprintln(w, "<p>Схемы:<p>")
 		for _, schema := range sch {
 			fmt.Fprintf(w, "<p>id: %d name: %s <p>", schema.Id, schema.Name)
 		}
@@ -702,7 +530,7 @@ func handlerModifyAccsSchema(w http.ResponseWriter, r *http.Request, db *sqlx.DB
 			fmt.Fprintln(w, http.StatusBadRequest)
 			return
 		}
-		fmt.Fprintln(w, "<p>Аккаунты:<p>")
+		fmt.Fprintln(w, "<h1>Аккаунты:</h1>")
 		accounts := []Account{}
 		err = db.Select(&accounts, `SELECT * FROM "Account"`)
 		if err != nil {
@@ -728,35 +556,22 @@ func handlerModifyAccsSchema(w http.ResponseWriter, r *http.Request, db *sqlx.DB
 			fmt.Fprintln(w, http.StatusBadRequest)
 			return
 		}
-		fmt.Fprintf(w, `<!DOCTYPE html>
-			<html>
-			<body>
-				<h1>Успешно</h1>
-				<a href="http://localhost:8080">Вернутся на главную</a>
-			</body>
-			</html>
-			`)
 		return
 	}
 }
 
 func handlerDeleteAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
+	tp, err := template.ParseFiles("./ui/html/deleteAccount.html")
+	if err != nil {
+		fmt.Fprintln(w, http.StatusBadRequest)
+		return
+	}
+	err = tp.ExecuteTemplate(w, "deleteAccount.html", r)
+	if err != nil {
+		fmt.Fprintln(w, http.StatusBadRequest)
+		return
+	}
 	if r.Method == "GET" {
-		fmt.Fprintf(w, `
-			<!DOCTYPE html>
-			<html>
-			<body>
-				<h1>12 - Удаление аккаунта<h1>
-				<form action="/12" method="post">
-					<label for="nameInput">Введите Id аккаунта:</label>
-					<input type="text" id="nameInput" name="id">
-					<button type="submit">Отправить</button>
-				</form>
-				<a href="http://localhost:8080">Вернутся на главную</a>
-			</body>
-			</html>
-		`)
-		fmt.Fprintln(w, "<p>Аккаунты:<p>")
 		accounts := []Account{}
 		err := db.Select(&accounts, `SELECT * FROM "Account"`)
 		if err != nil {
@@ -777,35 +592,22 @@ func handlerDeleteAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
 			fmt.Fprintln(w, http.StatusBadRequest)
 			return
 		}
-		fmt.Fprintf(w, `<!DOCTYPE html>
-			<html>
-			<body>
-				<h1>Успешно</h1>
-				<a href="http://localhost:8080">Вернутся на главную</a>
-			</body>
-			</html>
-			`)
 		return
 	}
 }
 
 func handlerAviaListAcc(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
+	tp, err := template.ParseFiles("./ui/html/aviaListAcc.html")
+	if err != nil {
+		fmt.Fprintln(w, http.StatusBadRequest)
+		return
+	}
+	err = tp.ExecuteTemplate(w, "aviaListAcc.html", r)
+	if err != nil {
+		fmt.Fprintln(w, http.StatusBadRequest)
+		return
+	}
 	if r.Method == "GET" {
-		fmt.Fprintf(w, `
-			<!DOCTYPE html>
-			<html>
-			<body>
-				<h1>13 - Поиск авиакомпаний по аккаунту<h1>
-				<form action="/13" method="post">
-					<label for="nameInput">Введите Id аккаунта:</label>
-					<input type="text" id="nameInput" name="id">
-					<button type="submit">Отправить</button>
-				</form>
-				<a href="http://localhost:8080">Вернутся на главную</a>
-			</body>
-			</html>
-		`)
-		fmt.Fprintln(w, "<p>Аккаунты:<p>")
 		accounts := []Account{}
 		err := db.Select(&accounts, `SELECT * FROM "Account"`)
 		if err != nil {
@@ -844,14 +646,6 @@ func handlerAviaListAcc(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
 			fmt.Fprintln(w, http.StatusBadRequest)
 			return
 		}
-		fmt.Fprintf(w, `<!DOCTYPE html>
-			<html>
-			<body>
-				<h1>Список авиакомпаний у аккаунта:</h1>
-				<a href="http://localhost:8080">Вернутся на главную</a>
-			</body>
-			</html>
-			`)
 		for _, acc := range accounts {
 			fmt.Fprintf(w, "<p><p>name: %s", acc.Name)
 		}
@@ -860,22 +654,17 @@ func handlerAviaListAcc(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
 }
 
 func handlerAviaListProvider(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
+	tp, err := template.ParseFiles("./ui/html/aviaListProvider.html")
+	if err != nil {
+		fmt.Fprintln(w, http.StatusBadRequest)
+		return
+	}
+	err = tp.ExecuteTemplate(w, "aviaListProvider.html", r)
+	if err != nil {
+		fmt.Fprintln(w, http.StatusBadRequest)
+		return
+	}
 	if r.Method == "GET" {
-		fmt.Fprintf(w, `
-			<!DOCTYPE html>
-			<html>
-			<body>
-				<h1>14 - Просмотр авиакомпаний которыми владеет поставщик<h1>
-				<form action="/14" method="post">
-					<label for="nameInput">Введите Id поставщика:</label>
-					<input type="text" id="nameInput" name="id">
-					<button type="submit">Отправить</button>
-				</form>
-				<a href="http://localhost:8080">Вернутся на главную</a>
-			</body>
-			</html>
-		`)
-		fmt.Fprintln(w, "<p>Поставщики:<p>")
 		providers := []Provider{}
 		err := db.Select(&providers, `SELECT * from "Provider"`)
 		if err != nil {
@@ -900,15 +689,7 @@ func handlerAviaListProvider(w http.ResponseWriter, r *http.Request, db *sqlx.DB
 			fmt.Fprintln(w, http.StatusBadRequest)
 			return
 		}
-		fmt.Fprintf(w, `<!DOCTYPE html>
-			<html>
-			<body>
-				<h1>Вот список компаний которыми владеет поставщик с Id: %s</h1>
-				<h2>%s<h2>
-				<a href="http://localhost:8080">Вернутся на главную</a>
-			</body>
-			</html>
-			`, id, airlines)
+		fmt.Fprintf(w, `<h2>%s</h2>`, airlines)
 		return
 	}
 }
