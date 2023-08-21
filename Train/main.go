@@ -65,7 +65,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 				<a href="http://localhost:8080/8">8.   Изменить схему</a><p><p>
 				<a href="http://localhost:8080/9">9.   Удалить схему</a><p><p>
 				<a href="http://localhost:8080/10">10. Добавить аккаунт</a><p><p>
-				<a href="http://localhost:8080/11">11. Изменение схемы</a><p><p>
+				<a href="http://localhost:8080/11">11. Изменение схемы аккаунта</a><p><p>
 				<a href="http://localhost:8080/12">12. Удалить аккаунт</a><p><p>
 				<a href="http://localhost:8080/13">13. Получить список авиакомпаний по Id аккаунта</a><p><p>
 				<a href="http://localhost:8080/14">14. Получить список авиакомпаний по Id поставщика</a><p><p>
@@ -74,14 +74,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		`)
 }
 
-func handlerAddAirline(w http.ResponseWriter, r *http.Request) {
-	connStr := "host=localhost port=5432 user=root dbname=airline password=secret sslmode=disable"
-	db, err := sqlx.Open("postgres", connStr)
-	if err != nil {
-		fmt.Fprintln(w, http.StatusBadRequest)
-		return
-	}
-	defer db.Close()
+func handlerAddAirline(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
 	if r.Method == "GET" {
 		fmt.Fprintf(w, `
 			<!DOCTYPE html>
@@ -102,7 +95,7 @@ func handlerAddAirline(w http.ResponseWriter, r *http.Request) {
 			</html>
 		`)
 		airlines := []Airline{}
-		err = db.Select(&airlines, "SELECT * FROM \"Airline\"")
+		err := db.Select(&airlines, `SELECT * FROM "Airline"`)
 		if err != nil {
 			fmt.Fprintln(w, http.StatusBadRequest)
 			return
@@ -113,7 +106,7 @@ func handlerAddAirline(w http.ResponseWriter, r *http.Request) {
 		}
 		fmt.Fprintln(w, "Список поставщиков и компаний которыми они владеют:")
 		airpvs := []Airpv{}
-		err := db.Select(&airpvs, `
+		err = db.Select(&airpvs, `
 		SELECT
 		     "Provider"."code",
 			 "Provider"."id",
@@ -170,14 +163,7 @@ func handlerAddAirline(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handlerDeleteAirline(w http.ResponseWriter, r *http.Request) {
-	connStr := "host=localhost port=5432 user=root dbname=airline password=secret sslmode=disable"
-	db, err := sqlx.Open("postgres", connStr)
-	if err != nil {
-		fmt.Fprintln(w, http.StatusBadRequest)
-		return
-	}
-	defer db.Close()
+func handlerDeleteAirline(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
 	if r.Method == "GET" {
 		fmt.Fprintf(w, `
 			<!DOCTYPE html>
@@ -194,7 +180,7 @@ func handlerDeleteAirline(w http.ResponseWriter, r *http.Request) {
 			</html>
 		`)
 		airlines := []Airline{}
-		err = db.Select(&airlines, "SELECT * FROM \"Airline\"")
+		err := db.Select(&airlines, `SELECT * FROM "Airline"`)
 		if err != nil {
 			fmt.Fprintln(w, http.StatusBadRequest)
 			return
@@ -209,7 +195,7 @@ func handlerDeleteAirline(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintln(w, http.StatusBadRequest)
 			return
 		}
-		_, err = db.Exec(`DELETE FROM "ProviderAirline" WHERE airline_id = $1`, id)
+		_, err := db.Exec(`DELETE FROM "ProviderAirline" WHERE airline_id = $1`, id)
 		if err != nil {
 			fmt.Fprintln(w, http.StatusBadRequest)
 			return
@@ -231,14 +217,7 @@ func handlerDeleteAirline(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handlerAddProvider(w http.ResponseWriter, r *http.Request) { //Возможно надо доработать
-	connStr := "host=localhost port=5432 user=root dbname=airline password=secret sslmode=disable"
-	db, err := sqlx.Open("postgres", connStr)
-	if err != nil {
-		fmt.Fprintln(w, http.StatusBadRequest)
-		return
-	}
-	defer db.Close()
+func handlerAddProvider(w http.ResponseWriter, r *http.Request, db *sqlx.DB) { //Возможно надо доработать
 	if r.Method == "GET" {
 		fmt.Fprintf(w, `
 			<!DOCTYPE html>
@@ -262,11 +241,7 @@ func handlerAddProvider(w http.ResponseWriter, r *http.Request) { //Возмож
 			fmt.Fprintln(w, http.StatusBadRequest)
 			return
 		}
-		if err != nil {
-			fmt.Fprintln(w, http.StatusBadRequest)
-			return
-		}
-		_, err = db.Exec(`INSERT INTO "Provider" ("id", "name") VALUES ($1,$2)`, id, name)
+		_, err := db.Exec(`INSERT INTO "Provider" ("id", "name") VALUES ($1,$2)`, id, name)
 		if err != nil {
 			fmt.Fprintln(w, http.StatusBadRequest)
 			return
@@ -283,14 +258,7 @@ func handlerAddProvider(w http.ResponseWriter, r *http.Request) { //Возмож
 	}
 }
 
-func handlerDeleteProvider(w http.ResponseWriter, r *http.Request) {
-	connStr := "host=localhost port=5432 user=root dbname=airline password=secret sslmode=disable"
-	db, err := sqlx.Open("postgres", connStr)
-	if err != nil {
-		fmt.Fprintln(w, http.StatusBadRequest)
-		return
-	}
-	defer db.Close()
+func handlerDeleteProvider(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
 	if r.Method == "GET" {
 		fmt.Fprintf(w, `
 			<!DOCTYPE html>
@@ -303,10 +271,10 @@ func handlerDeleteProvider(w http.ResponseWriter, r *http.Request) {
 					<button type="submit">Отправить</button>
 				</form>
 				<a href="http://localhost:8080">Вернутся на главную</a>
+				<h2><p>Список поставщиков и компаний которыми они владеют:<p><h2>
 			</body>
 			</html>
 		`)
-		fmt.Fprintln(w, "Список поставщиков и компаний которыми они владеют:")
 		airpvs := []Airpv{}
 		err := db.Select(&airpvs, `
 		SELECT
@@ -330,15 +298,7 @@ func handlerDeleteProvider(w http.ResponseWriter, r *http.Request) {
 		}
 	} else if r.Method == "POST" {
 		id := r.FormValue("id")
-		if err != nil {
-			fmt.Fprintln(w, http.StatusBadRequest)
-			return
-		}
 		if id == "" {
-			fmt.Fprintln(w, http.StatusBadRequest)
-			return
-		}
-		if err != nil {
 			fmt.Fprintln(w, http.StatusBadRequest)
 			return
 		}
@@ -377,20 +337,13 @@ func handlerDeleteProvider(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handlerModifyProvider(w http.ResponseWriter, r *http.Request) {
-	connStr := "host=localhost port=5432 user=root dbname=airline password=secret sslmode=disable"
-	db, err := sqlx.Open("postgres", connStr)
-	if err != nil {
-		fmt.Fprintln(w, http.StatusBadRequest)
-		return
-	}
-	defer db.Close()
+func handlerModifyProvider(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
 	if r.Method == "GET" {
 		fmt.Fprintf(w, `
 			<!DOCTYPE html>
 			<html>
 			<body>
-				<h1>5 - Изменения списка поставщиков (Введите код поставщика и Id авикомпании)<h1>
+				<h1>5 - Изменения списка поставщиков <p>Введите код поставщика и Id авикомпании которую хотите убрать<p><h1>
 				<form action="/5" method="post">
 					<label for="idInput">Введите Id:</label>
 					<input type="text" id="idInput" name="id">
@@ -402,7 +355,7 @@ func handlerModifyProvider(w http.ResponseWriter, r *http.Request) {
 			</body>
 			</html>
 		`)
-		fmt.Fprintln(w, "Список поставщиков и компаний которыми они владеют:")
+		fmt.Fprintln(w, "<p>Список поставщиков и компаний которыми они владеют:<p>")
 		airpvs := []Airpv{}
 		err := db.Select(&airpvs, `
 		SELECT
@@ -456,14 +409,7 @@ func handlerModifyProvider(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handlerAddSchema(w http.ResponseWriter, r *http.Request) { //Возможно надо доработать
-	connStr := "host=localhost port=5432 user=root dbname=airline password=secret sslmode=disable"
-	db, err := sqlx.Open("postgres", connStr)
-	if err != nil {
-		fmt.Fprintln(w, http.StatusBadRequest)
-		return
-	}
-	defer db.Close()
+func handlerAddSchema(w http.ResponseWriter, r *http.Request, db *sqlx.DB) { //Возможно надо доработать
 	if r.Method == "GET" {
 		fmt.Fprintf(w, `
 			<!DOCTYPE html>
@@ -480,7 +426,7 @@ func handlerAddSchema(w http.ResponseWriter, r *http.Request) { //Возможн
 			</html>
 		`)
 		schemas := []SSchema{}
-		err = db.Select(&schemas, "SELECT * FROM \"SSchema\"")
+		err := db.Select(&schemas, `SELECT * FROM "SSchema"`)
 		if err != nil {
 			fmt.Fprintln(w, http.StatusBadRequest)
 			return
@@ -491,15 +437,11 @@ func handlerAddSchema(w http.ResponseWriter, r *http.Request) { //Возможн
 		}
 	} else if r.Method == "POST" {
 		name := r.FormValue("name")
-		if err != nil {
-			fmt.Fprintln(w, http.StatusBadRequest)
-			return
-		}
 		if name == "" {
 			fmt.Fprintln(w, http.StatusBadRequest)
 			return
 		}
-		_, err = db.Exec(`INSERT INTO "SSchema" ("name") VALUES ($1)`, name)
+		_, err := db.Exec(`INSERT INTO "SSchema" ("name") VALUES ($1)`, name)
 		if err != nil {
 			fmt.Fprintln(w, http.StatusBadRequest)
 			return
@@ -517,14 +459,7 @@ func handlerAddSchema(w http.ResponseWriter, r *http.Request) { //Возможн
 	}
 }
 
-func handlerSchemaSearch(w http.ResponseWriter, r *http.Request) {
-	connStr := "host=localhost port=5432 user=root dbname=airline password=secret sslmode=disable"
-	db, err := sqlx.Open("postgres", connStr)
-	if err != nil {
-		fmt.Fprintln(w, http.StatusBadRequest)
-		return
-	}
-	defer db.Close()
+func handlerSchemaSearch(w http.ResponseWriter, r *http.Request, db *sqlx.DB) { //Вывод схемы не массивом, а строкой
 	if r.Method == "GET" {
 		fmt.Fprintf(w, `
 			<!DOCTYPE html>
@@ -542,21 +477,16 @@ func handlerSchemaSearch(w http.ResponseWriter, r *http.Request) {
 		`)
 	} else if r.Method == "POST" {
 		name := r.FormValue("name")
-		if err != nil {
-			fmt.Fprintln(w, http.StatusBadRequest)
-			return
-		}
 		if name == "" {
 			fmt.Fprintln(w, http.StatusBadRequest)
 			return
 		}
 		var sch SSchema
-		err = db.Get(&sch, `SELECT * FROM "SSchema" WHERE name = $1`, name)
+		err := db.Get(&sch, `SELECT * FROM "SSchema" WHERE name = $1`, name)
 		if err != nil {
 			fmt.Fprintln(w, http.StatusBadRequest)
 			return
 		}
-
 		fmt.Fprintf(w, `<!DOCTYPE html>
 			<html>
 			<body>
@@ -569,14 +499,7 @@ func handlerSchemaSearch(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handlerModifySchema(w http.ResponseWriter, r *http.Request) {
-	connStr := "host=localhost port=5432 user=root dbname=airline password=secret sslmode=disable"
-	db, err := sqlx.Open("postgres", connStr)
-	if err != nil {
-		fmt.Fprintln(w, http.StatusBadRequest)
-		return
-	}
-	defer db.Close()
+func handlerModifySchema(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
 	if r.Method == "GET" {
 		fmt.Fprintf(w, `
 			<!DOCTYPE html>
@@ -595,7 +518,7 @@ func handlerModifySchema(w http.ResponseWriter, r *http.Request) {
 			</html>
 		`)
 		var sch []SSchema
-		err = db.Select(&sch, `SELECT * FROM "SSchema"`)
+		err := db.Select(&sch, `SELECT * FROM "SSchema"`)
 		for _, schema := range sch {
 			fmt.Fprintf(w, "<p>id: %d name: %s <p>", schema.Id, schema.Name)
 		}
@@ -627,14 +550,7 @@ func handlerModifySchema(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handlerDeleteSchema(w http.ResponseWriter, r *http.Request) {
-	connStr := "host=localhost port=5432 user=root dbname=airline password=secret sslmode=disable"
-	db, err := sqlx.Open("postgres", connStr)
-	if err != nil {
-		fmt.Fprintln(w, http.StatusBadRequest)
-		return
-	}
-	defer db.Close()
+func handlerDeleteSchema(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
 	if r.Method == "GET" {
 		fmt.Fprintf(w, `
 			<!DOCTYPE html>
@@ -651,7 +567,7 @@ func handlerDeleteSchema(w http.ResponseWriter, r *http.Request) {
 			</html>
 		`)
 		schemas := []SSchema{}
-		err = db.Select(&schemas, "SELECT * FROM \"SSchema\"")
+		err := db.Select(&schemas, `SELECT * FROM "SSchema"`)
 		if err != nil {
 			fmt.Fprintln(w, http.StatusBadRequest)
 			return
@@ -678,7 +594,6 @@ func handlerDeleteSchema(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintln(w, http.StatusBadRequest)
 			return
 		}
-
 		fmt.Fprintf(w, `<!DOCTYPE html>
 			<html>
 			<body>
@@ -691,14 +606,7 @@ func handlerDeleteSchema(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handlerAccountAdd(w http.ResponseWriter, r *http.Request) {
-	connStr := "host=localhost port=5432 user=root dbname=airline password=secret sslmode=disable"
-	db, err := sqlx.Open("postgres", connStr)
-	if err != nil {
-		fmt.Fprintln(w, http.StatusBadRequest)
-		return
-	}
-	defer db.Close()
+func handlerAccountAdd(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
 	if r.Method == "GET" {
 		fmt.Fprintf(w, `
 			<!DOCTYPE html>
@@ -717,7 +625,7 @@ func handlerAccountAdd(w http.ResponseWriter, r *http.Request) {
 			</html>
 		`)
 		schemas := []SSchema{}
-		err = db.Select(&schemas, "SELECT * FROM \"SSchema\"")
+		err := db.Select(&schemas, "SELECT * FROM \"SSchema\"")
 		if err != nil {
 			fmt.Fprintln(w, http.StatusBadRequest)
 			return
@@ -765,14 +673,7 @@ func handlerAccountAdd(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handlerModifyAccsSchema(w http.ResponseWriter, r *http.Request) {
-	connStr := "host=localhost port=5432 user=root dbname=airline password=secret sslmode=disable"
-	db, err := sqlx.Open("postgres", connStr)
-	if err != nil {
-		fmt.Fprintln(w, http.StatusBadRequest)
-		return
-	}
-	defer db.Close()
+func handlerModifyAccsSchema(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
 	if r.Method == "GET" {
 		fmt.Fprintf(w, `
 			<!DOCTYPE html>
@@ -792,7 +693,7 @@ func handlerModifyAccsSchema(w http.ResponseWriter, r *http.Request) {
 			</html>
 		`)
 		var sch []SSchema
-		err = db.Select(&sch, `SELECT * FROM "SSchema"`)
+		err := db.Select(&sch, `SELECT * FROM "SSchema"`)
 		fmt.Fprintln(w, "<p>Схемы:<p>")
 		for _, schema := range sch {
 			fmt.Fprintf(w, "<p>id: %d name: %s <p>", schema.Id, schema.Name)
@@ -839,21 +740,13 @@ func handlerModifyAccsSchema(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handlerDeleteAccount(w http.ResponseWriter, r *http.Request) {
-	connStr := "host=localhost port=5432 user=root dbname=airline password=secret sslmode=disable"
-	db, err := sqlx.Open("postgres", connStr)
-	if err != nil {
-		fmt.Fprintln(w, http.StatusBadRequest)
-		return
-	}
-	defer db.Close()
+func handlerDeleteAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
 	if r.Method == "GET" {
 		fmt.Fprintf(w, `
 			<!DOCTYPE html>
 			<html>
 			<body>
 				<h1>12 - Удаление аккаунта<h1>
-				<h2><p>Введите Id аккаунта у которого хотите поменять схему и Id схемы на которую поменять<p><h2>
 				<form action="/12" method="post">
 					<label for="nameInput">Введите Id аккаунта:</label>
 					<input type="text" id="nameInput" name="id">
@@ -865,7 +758,7 @@ func handlerDeleteAccount(w http.ResponseWriter, r *http.Request) {
 		`)
 		fmt.Fprintln(w, "<p>Аккаунты:<p>")
 		accounts := []Account{}
-		err = db.Select(&accounts, `SELECT * FROM "Account"`)
+		err := db.Select(&accounts, `SELECT * FROM "Account"`)
 		if err != nil {
 			fmt.Fprintln(w, http.StatusBadRequest)
 			return
@@ -896,14 +789,7 @@ func handlerDeleteAccount(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handlerAviaListAcc(w http.ResponseWriter, r *http.Request) {
-	connStr := "host=localhost port=5432 user=root dbname=airline password=secret sslmode=disable"
-	db, err := sqlx.Open("postgres", connStr)
-	if err != nil {
-		fmt.Fprintln(w, http.StatusBadRequest)
-		return
-	}
-	defer db.Close()
+func handlerAviaListAcc(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
 	if r.Method == "GET" {
 		fmt.Fprintf(w, `
 			<!DOCTYPE html>
@@ -921,7 +807,7 @@ func handlerAviaListAcc(w http.ResponseWriter, r *http.Request) {
 		`)
 		fmt.Fprintln(w, "<p>Аккаунты:<p>")
 		accounts := []Account{}
-		err = db.Select(&accounts, `SELECT * FROM "Account"`)
+		err := db.Select(&accounts, `SELECT * FROM "Account"`)
 		if err != nil {
 			fmt.Fprintln(w, http.StatusBadRequest)
 			return
@@ -955,7 +841,6 @@ func handlerAviaListAcc(w http.ResponseWriter, r *http.Request) {
 								GROUP BY
 								"Airline"."name"`, id)
 		if err != nil {
-			panic(err)
 			fmt.Fprintln(w, http.StatusBadRequest)
 			return
 		}
@@ -974,14 +859,7 @@ func handlerAviaListAcc(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handlerAviaListProvider(w http.ResponseWriter, r *http.Request) {
-	connStr := "host=localhost port=5432 user=root dbname=airline password=secret sslmode=disable"
-	db, err := sqlx.Open("postgres", connStr)
-	if err != nil {
-		fmt.Fprintln(w, http.StatusBadRequest)
-		return
-	}
-	defer db.Close()
+func handlerAviaListProvider(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
 	if r.Method == "GET" {
 		fmt.Fprintf(w, `
 			<!DOCTYPE html>
@@ -999,18 +877,19 @@ func handlerAviaListProvider(w http.ResponseWriter, r *http.Request) {
 		`)
 		fmt.Fprintln(w, "<p>Поставщики:<p>")
 		providers := []Provider{}
-		err = db.Select(&providers, `SELECT * from "Provider"`)
+		err := db.Select(&providers, `SELECT * from "Provider"`)
+		if err != nil {
+			panic(err)
+			fmt.Fprintln(w, http.StatusBadRequest)
+			return
+		}
 		for _, provider := range providers {
 			fmt.Fprintf(w, "<p>id: %s, name: %s, code: %v<p>", provider.Id, provider.Name, provider.Code)
 		}
 	} else if r.Method == "POST" {
 		id := r.FormValue("id")
-		if err != nil {
-			fmt.Fprintln(w, http.StatusBadRequest)
-			return
-		}
 		var airlines string
-		err = db.Get(&airlines, `SELECT
+		err := db.Get(&airlines, `SELECT
 			 ARRAY_AGG("ProviderAirline"."airline_id") AS "airlines"
 		FROM
 			 "Provider"
@@ -1035,20 +914,27 @@ func handlerAviaListProvider(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	connStr := "host=localhost port=5432 user=root dbname=airline password=secret sslmode=disable"
+	db, err := sqlx.Open("postgres", connStr)
+	if err != nil {
+		fmt.Println(http.StatusBadRequest)
+		return
+	}
+	defer db.Close()
 	http.HandleFunc("/", handler)
-	http.HandleFunc("/1", handlerAddAirline)
-	http.HandleFunc("/2", handlerDeleteAirline)
-	http.HandleFunc("/3", handlerAddProvider)
-	http.HandleFunc("/4", handlerDeleteProvider)
-	http.HandleFunc("/5", handlerModifyProvider)
-	http.HandleFunc("/6", handlerAddSchema)
-	http.HandleFunc("/7", handlerSchemaSearch)
-	http.HandleFunc("/8", handlerModifySchema)
-	http.HandleFunc("/9", handlerDeleteSchema)
-	http.HandleFunc("/10", handlerAccountAdd)
-	http.HandleFunc("/11", handlerModifyAccsSchema)
-	http.HandleFunc("/12", handlerDeleteAccount)
-	http.HandleFunc("/13", handlerAviaListAcc)
-	http.HandleFunc("/14", handlerAviaListProvider)
+	http.HandleFunc("/1", func(w http.ResponseWriter, r *http.Request) { handlerAddAirline(w, r, db) })
+	http.HandleFunc("/2", func(w http.ResponseWriter, r *http.Request) { handlerDeleteAirline(w, r, db) })
+	http.HandleFunc("/3", func(w http.ResponseWriter, r *http.Request) { handlerAddProvider(w, r, db) })
+	http.HandleFunc("/4", func(w http.ResponseWriter, r *http.Request) { handlerDeleteProvider(w, r, db) })
+	http.HandleFunc("/5", func(w http.ResponseWriter, r *http.Request) { handlerModifyProvider(w, r, db) })
+	http.HandleFunc("/6", func(w http.ResponseWriter, r *http.Request) { handlerAddSchema(w, r, db) })
+	http.HandleFunc("/7", func(w http.ResponseWriter, r *http.Request) { handlerSchemaSearch(w, r, db) })
+	http.HandleFunc("/8", func(w http.ResponseWriter, r *http.Request) { handlerModifySchema(w, r, db) })
+	http.HandleFunc("/9", func(w http.ResponseWriter, r *http.Request) { handlerDeleteSchema(w, r, db) })
+	http.HandleFunc("/10", func(w http.ResponseWriter, r *http.Request) { handlerAccountAdd(w, r, db) })
+	http.HandleFunc("/11", func(w http.ResponseWriter, r *http.Request) { handlerModifyAccsSchema(w, r, db) })
+	http.HandleFunc("/12", func(w http.ResponseWriter, r *http.Request) { handlerDeleteAccount(w, r, db) })
+	http.HandleFunc("/13", func(w http.ResponseWriter, r *http.Request) { handlerAviaListAcc(w, r, db) })
+	http.HandleFunc("/14", func(w http.ResponseWriter, r *http.Request) { handlerAviaListProvider(w, r, db) })
 	http.ListenAndServe(":8080", nil)
 }
