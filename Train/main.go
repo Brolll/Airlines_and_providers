@@ -51,6 +51,79 @@ type Airpv struct {
 	Airlines string
 }
 
+func showAirlines(w http.ResponseWriter, db *sqlx.DB) {
+	airlines := []Airline{}
+	err := db.Select(&airlines, `SELECT * FROM "Airline"`)
+	if err != nil {
+		fmt.Fprintln(w, http.StatusBadRequest)
+		return
+	}
+	for _, airline := range airlines {
+		fmt.Fprintf(w, "<p>id: %s, name: %s\n<p>", airline.Id, airline.Name)
+	}
+}
+
+func showAirlinesAndProviders(w http.ResponseWriter, db *sqlx.DB) {
+	airpvs := []Airpv{}
+	err := db.Select(&airpvs, `
+		SELECT
+		     "Provider"."code",
+			 "Provider"."id",
+			 "Provider"."name",
+			 ARRAY_AGG("ProviderAirline"."airline_id") AS "airlines"
+		FROM
+			 "Provider"
+			 left JOIN "ProviderAirline" ON "Provider"."code" = "ProviderAirline"."provider_code"
+		GROUP BY
+			 "Provider"."id",
+			 "Provider"."name"
+			 `)
+	if err != nil {
+		fmt.Fprintln(w, http.StatusBadRequest)
+		return
+	}
+	for _, airpv := range airpvs {
+		fmt.Fprintf(w, "<p>code: %d id: %s, name: %s, airlines: %v\n<p>", airpv.Code, airpv.Id, airpv.Name, airpv.Airlines)
+	}
+}
+
+func showSchemas(w http.ResponseWriter, db *sqlx.DB) {
+	schemas := []SSchema{}
+	err := db.Select(&schemas, `SELECT * FROM "SSchema"`)
+	if err != nil {
+		fmt.Fprintln(w, http.StatusBadRequest)
+		return
+	}
+	for _, schema := range schemas {
+		fmt.Fprintf(w, "<p>id: %d, name: %s\n<p>", schema.Id, schema.Name)
+	}
+}
+
+func showAccounts(w http.ResponseWriter, db *sqlx.DB) {
+	accounts := []Account{}
+	err := db.Select(&accounts, `SELECT * FROM "Account"`)
+	if err != nil {
+		fmt.Fprintln(w, http.StatusBadRequest)
+		return
+	}
+	for _, account := range accounts {
+		fmt.Fprintf(w, "<p>id: %d Schemaid: %d name: %s<p>", account.Id, account.SchemaId, account.Name)
+	}
+}
+
+func showProviders(w http.ResponseWriter, db *sqlx.DB) {
+	providers := []Provider{}
+	err := db.Select(&providers, `SELECT * from "Provider"`)
+	if err != nil {
+		panic(err)
+		fmt.Fprintln(w, http.StatusBadRequest)
+		return
+	}
+	for _, provider := range providers {
+		fmt.Fprintf(w, "<p>id: %s, name: %s, code: %v<p>", provider.Id, provider.Name, provider.Code)
+	}
+}
+
 func handler(w http.ResponseWriter, r *http.Request) {
 	tp, err := template.ParseFiles("./ui/html/mainPage.html")
 	if err != nil {
@@ -76,37 +149,9 @@ func handlerAddAirline(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
 		return
 	}
 	if r.Method == "GET" {
-		airlines := []Airline{}
-		err := db.Select(&airlines, `SELECT * FROM "Airline"`)
-		if err != nil {
-			fmt.Fprintln(w, http.StatusBadRequest)
-			return
-		}
-		for _, airline := range airlines {
-			fmt.Fprintf(w, "<p>id: %s, name: %s\n<p>", airline.Id, airline.Name)
-		}
-		fmt.Fprintln(w, "<b>Список поставщиков и компаний которыми они владеют:</b>")
-		airpvs := []Airpv{}
-		err = db.Select(&airpvs, `
-		SELECT
-		     "Provider"."code",
-			 "Provider"."id",
-			 "Provider"."name",
-			 ARRAY_AGG("ProviderAirline"."airline_id") AS "airlines"
-		FROM
-			 "Provider"
-			 left JOIN "ProviderAirline" ON "Provider"."code" = "ProviderAirline"."provider_code"
-		GROUP BY
-			 "Provider"."id",
-			 "Provider"."name"
-			 `)
-		if err != nil {
-			fmt.Fprintln(w, http.StatusBadRequest)
-			return
-		}
-		for _, airpv := range airpvs {
-			fmt.Fprintf(w, "<p>code: %d id: %s, name: %s, airlines: %v\n<p>", airpv.Code, airpv.Id, airpv.Name, airpv.Airlines)
-		}
+		showAirlines(w, db)
+		fmt.Fprintln(w, "<h1>Список поставщиков и компаний которыми они владеют:</h1>")
+		showAirlinesAndProviders(w, db)
 	} else if r.Method == "POST" {
 		id, name := r.FormValue("id"), r.FormValue("name")
 		provider_code, err := strconv.Atoi(r.FormValue("provider_code"))
@@ -144,15 +189,7 @@ func handlerDeleteAirline(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
 		return
 	}
 	if r.Method == "GET" {
-		airlines := []Airline{}
-		err := db.Select(&airlines, `SELECT * FROM "Airline"`)
-		if err != nil {
-			fmt.Fprintln(w, http.StatusBadRequest)
-			return
-		}
-		for _, airline := range airlines {
-			fmt.Fprintf(w, "<p>id: %s, name: %s\n<p>", airline.Id, airline.Name)
-		}
+		showAirlines(w, db)
 	} else if r.Method == "POST" {
 		id := r.FormValue("id")
 		if id == "" {
@@ -211,27 +248,7 @@ func handlerDeleteProvider(w http.ResponseWriter, r *http.Request, db *sqlx.DB) 
 		return
 	}
 	if r.Method == "GET" {
-		airpvs := []Airpv{}
-		err := db.Select(&airpvs, `
-		SELECT
-		     "Provider"."code",
-			 "Provider"."id",
-			 "Provider"."name",
-			 ARRAY_AGG("ProviderAirline"."airline_id") AS "airlines"
-		FROM
-			 "Provider"
-			 left JOIN "ProviderAirline" ON "Provider"."code" = "ProviderAirline"."provider_code"
-		GROUP BY
-			 "Provider"."id",
-			 "Provider"."name"
-			 `)
-		if err != nil {
-			fmt.Fprintln(w, http.StatusBadRequest)
-			return
-		}
-		for _, airpv := range airpvs {
-			fmt.Fprintf(w, "<p>code: %d id: %s, name: %s, airlines: %v\n<p>", airpv.Code, airpv.Id, airpv.Name, airpv.Airlines)
-		}
+		showAirlinesAndProviders(w, db)
 	} else if r.Method == "POST" {
 		id := r.FormValue("id")
 		if id == "" {
@@ -277,27 +294,7 @@ func handlerModifyProvider(w http.ResponseWriter, r *http.Request, db *sqlx.DB) 
 		return
 	}
 	if r.Method == "GET" {
-		airpvs := []Airpv{}
-		err := db.Select(&airpvs, `
-		SELECT
-		     "Provider"."code",
-			 "Provider"."id",
-			 "Provider"."name",
-			 ARRAY_AGG("ProviderAirline"."airline_id") AS "airlines"
-		FROM
-			 "Provider"
-			 left JOIN "ProviderAirline" ON "Provider"."code" = "ProviderAirline"."provider_code"
-		GROUP BY
-			 "Provider"."id",
-			 "Provider"."name"
-			 `)
-		if err != nil {
-			fmt.Fprintln(w, http.StatusBadRequest)
-			return
-		}
-		for _, airpv := range airpvs {
-			fmt.Fprintf(w, "<p>code: %d id: %s, name: %s, airlines: %v\n<p>", airpv.Code, airpv.Id, airpv.Name, airpv.Airlines)
-		}
+		showAirlinesAndProviders(w, db)
 	} else if r.Method == "POST" {
 		id := r.FormValue("id")
 		provider_code, err := strconv.Atoi(r.FormValue("provider_code"))
@@ -330,15 +327,7 @@ func handlerAddSchema(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
 		return
 	}
 	if r.Method == "GET" {
-		schemas := []SSchema{}
-		err := db.Select(&schemas, `SELECT * FROM "SSchema"`)
-		if err != nil {
-			fmt.Fprintln(w, http.StatusBadRequest)
-			return
-		}
-		for _, schema := range schemas {
-			fmt.Fprintf(w, "<p>id: %d, name: %s\n<p>", schema.Id, schema.Name)
-		}
+		showSchemas(w, db)
 	} else if r.Method == "POST" {
 		name := r.FormValue("name")
 		if name == "" {
@@ -394,15 +383,7 @@ func handlerModifySchema(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
 		return
 	}
 	if r.Method == "GET" {
-		var sch []SSchema
-		err := db.Select(&sch, `SELECT * FROM "SSchema"`)
-		if err != nil {
-			fmt.Fprintln(w, http.StatusBadRequest)
-			return
-		}
-		for _, schema := range sch {
-			fmt.Fprintf(w, "<p>id: %d name: %s <p>", schema.Id, schema.Name)
-		}
+		showSchemas(w, db)
 	} else if r.Method == "POST" {
 		name := r.FormValue("name")
 		id, err := strconv.Atoi(r.FormValue("id"))
@@ -431,15 +412,7 @@ func handlerDeleteSchema(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
 		return
 	}
 	if r.Method == "GET" {
-		schemas := []SSchema{}
-		err := db.Select(&schemas, `SELECT * FROM "SSchema"`)
-		if err != nil {
-			fmt.Fprintln(w, http.StatusBadRequest)
-			return
-		}
-		for _, schema := range schemas {
-			fmt.Fprintf(w, "<p>id: %d, name: %s\n<p>", schema.Id, schema.Name)
-		}
+		showSchemas(w, db)
 	} else if r.Method == "POST" {
 		id, err := strconv.Atoi(r.FormValue("id"))
 		if err != nil {
@@ -474,25 +447,9 @@ func handlerAccountAdd(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
 		return
 	}
 	if r.Method == "GET" {
-		schemas := []SSchema{}
-		err := db.Select(&schemas, "SELECT * FROM \"SSchema\"")
-		if err != nil {
-			fmt.Fprintln(w, http.StatusBadRequest)
-			return
-		}
-		for _, schema := range schemas {
-			fmt.Fprintf(w, "<p>id: %d, name: %s\n<p>", schema.Id, schema.Name)
-		}
+		showSchemas(w, db)
 		fmt.Fprintln(w, "<h1>Аккаунты:</h1>")
-		accounts := []Account{}
-		err = db.Select(&accounts, `SELECT * FROM "Account"`)
-		if err != nil {
-			fmt.Fprintln(w, http.StatusBadRequest)
-			return
-		}
-		for _, account := range accounts {
-			fmt.Fprintf(w, "<p>id: %d Schemaid: %d name: %s<p>", account.Id, account.SchemaId, account.Name)
-		}
+		showAccounts(w, db)
 	} else if r.Method == "POST" {
 		name := r.FormValue("name")
 		id, err := strconv.Atoi(r.FormValue("schemaId"))
@@ -525,25 +482,9 @@ func handlerModifyAccsSchema(w http.ResponseWriter, r *http.Request, db *sqlx.DB
 		return
 	}
 	if r.Method == "GET" {
-		var sch []SSchema
-		err := db.Select(&sch, `SELECT * FROM "SSchema"`)
-		for _, schema := range sch {
-			fmt.Fprintf(w, "<p>id: %d name: %s <p>", schema.Id, schema.Name)
-		}
-		if err != nil {
-			fmt.Fprintln(w, http.StatusBadRequest)
-			return
-		}
+		showSchemas(w, db)
 		fmt.Fprintln(w, "<h1>Аккаунты:</h1>")
-		accounts := []Account{}
-		err = db.Select(&accounts, `SELECT * FROM "Account"`)
-		if err != nil {
-			fmt.Fprintln(w, http.StatusBadRequest)
-			return
-		}
-		for _, account := range accounts {
-			fmt.Fprintf(w, "<p>id: %d Schemaid: %d name: %s<p>", account.Id, account.SchemaId, account.Name)
-		}
+		showAccounts(w, db)
 	} else if r.Method == "POST" {
 		idacc, err := strconv.Atoi(r.FormValue("idacc"))
 		if err != nil {
@@ -576,15 +517,7 @@ func handlerDeleteAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
 		return
 	}
 	if r.Method == "GET" {
-		accounts := []Account{}
-		err := db.Select(&accounts, `SELECT * FROM "Account"`)
-		if err != nil {
-			fmt.Fprintln(w, http.StatusBadRequest)
-			return
-		}
-		for _, account := range accounts {
-			fmt.Fprintf(w, "<p>id: %d Schemaid: %d name: %s<p>", account.Id, account.SchemaId, account.Name)
-		}
+		showAccounts(w, db)
 	} else if r.Method == "POST" {
 		id, err := strconv.Atoi(r.FormValue("id"))
 		if err != nil {
@@ -612,15 +545,7 @@ func handlerAviaListAcc(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
 		return
 	}
 	if r.Method == "GET" {
-		accounts := []Account{}
-		err := db.Select(&accounts, `SELECT * FROM "Account"`)
-		if err != nil {
-			fmt.Fprintln(w, http.StatusBadRequest)
-			return
-		}
-		for _, account := range accounts {
-			fmt.Fprintf(w, "<p>id: %d Schemaid: %d name: %s<p>", account.Id, account.SchemaId, account.Name)
-		}
+		showAccounts(w, db)
 	} else if r.Method == "POST" {
 		id, err := strconv.Atoi(r.FormValue("id"))
 		if err != nil {
@@ -669,16 +594,7 @@ func handlerAviaListProvider(w http.ResponseWriter, r *http.Request, db *sqlx.DB
 		return
 	}
 	if r.Method == "GET" {
-		providers := []Provider{}
-		err := db.Select(&providers, `SELECT * from "Provider"`)
-		if err != nil {
-			panic(err)
-			fmt.Fprintln(w, http.StatusBadRequest)
-			return
-		}
-		for _, provider := range providers {
-			fmt.Fprintf(w, "<p>id: %s, name: %s, code: %v<p>", provider.Id, provider.Name, provider.Code)
-		}
+		showProviders(w, db)
 	} else if r.Method == "POST" {
 		id := r.FormValue("id")
 		var airlines string
