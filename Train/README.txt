@@ -9,16 +9,16 @@
 4. Ввести в Powershell: scoop install make
 5. Ввести в Powershell: scoop install migrate
 6. Запустить Docker
-7. Открыть проект в Goland
 
 //Опциональный пункт, если при открытии файла main.go в Goland написано GOROOT is not defined, выполните следующий пункт//
-8. Установить GOROOT, если там написано <No SDK>, необходимо нажать на +, затем на download, выбрать go1.21.0, нажать OK
+7. Установить GOROOT, если там написано <No SDK>, необходимо нажать на +, затем на download, выбрать go1.21.0, нажать OK
 //
 
-9. Ввести в терминал Goland: make postgres
-10. Ввести в терминал Goland: make createdb
-11. Ввести в терминал Goland: make migrateup
-12. Запустить приложение (Shift + F10)
+8. Открыть Powershell в папке с проектом
+9. Ввести в Powershell: make postgres
+10. Ввести в Powershell: make createdb
+11. Ввести в Powershell: make migrateup
+12. Ввести в Powershell: .\train.exe
 13. Открыть в браузере localhost:8080
 
 Если хотите проверить работу миграции, введите в терминале Goland: "make migratedown" а затем "make migrateup"
