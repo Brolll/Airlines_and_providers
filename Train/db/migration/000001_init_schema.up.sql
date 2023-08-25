@@ -40,9 +40,6 @@ CREATE table "ProviderAirline"(
 
 
 
-
--- ВСЁ ЧТО НИЖЕ - ВЕРНО
-
 INSERT INTO "Airline"(id, name) VALUES ('SU', 'Аэрофлот');
 INSERT INTO "Airline"(id, name) VALUES ('S7', 'S7');
 INSERT INTO "Airline"(id, name) VALUES ('KV', 'КрасАвиа');
