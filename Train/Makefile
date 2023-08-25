@@ -1,6 +1,3 @@
-#Чтобы всё работало запустите контейнер, создайте БД и загрузите её из файла
-#затем запустите main.go
-
 postgres: #Запускает контейнер
 	docker run --name postgres15 -p 5432:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=secret -d postgres:15
 
