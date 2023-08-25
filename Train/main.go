@@ -115,7 +115,6 @@ func showProviders(w http.ResponseWriter, db *sqlx.DB) {
 	providers := []Provider{}
 	err := db.Select(&providers, `SELECT * from "Provider"`)
 	if err != nil {
-		panic(err)
 		fmt.Fprintln(w, http.StatusBadRequest)
 		return
 	}
